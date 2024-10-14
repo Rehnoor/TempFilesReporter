@@ -4,6 +4,7 @@ import testinit
 import tkinter as tk
 from tkinter import messagebox
 from tkinter import ttk
+import shutil
 
 window = tk.Tk()
 window.title("Temp File Reporter")
@@ -66,6 +67,10 @@ def listData():
         tempTup = (dir[0], "Directory", dir[1], stringifyBytes(dir[2]), dir[3])
         tree.insert("", tk.END, values=tempTup)
 
+def clearTable():
+    for child in tree.get_children():
+        tree.delete(child)
+
 # function for processing submission
 def dir_submit():
     enteredDir = dirEntry.get()
@@ -74,20 +79,33 @@ def dir_submit():
     else:
         script.tempFiles = []
         script.tempFolders = []
+        clearTable()
         script.getTemp(enteredDir)
         printLog()
         getInsights()
         listData()
 
 
+def delete_tmp():
+    for file in script.tempFiles:
+        fullFilePath = os.path.join(file[0], file[1])
+        os.remove(fullFilePath)
+    for dir in script.tempFolders:
+        fullDirPath = os.path.join(dir[0], dir[1])
+        shutil.rmtree(fullDirPath)
 
 
 
 dirSub = tk.Button(window, text="Submit", command=dir_submit)
 dirSub.grid(row=3, column=0, padx=10, pady=10)
 
-
 tree.grid(row=5, column=0, padx=10, pady=10, sticky='ew')
+
+warningLbl = tk.Label(window, text="WARNING, this action is not reversable")
+warningLbl.grid(row=7, column=0, padx=10, pady=10)
+
+deleteBtn = tk.Button(window, text="DELETE", command=delete_tmp, fg='RED')
+deleteBtn.grid(row=8, column=0, padx=10, pady=10)
 
 
 
@@ -95,6 +113,7 @@ def printLog():
     print("HERE ARE THE TEMPORARY FILES")
     print("----------------------------------------------------")
 
+    
     for tup in script.tempFiles:
         dirpath, fName, fileSize, modTime = tup
         print("There is a temporary file called " + fName + " at the directory " + dirpath + ".")
