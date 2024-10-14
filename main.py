@@ -3,10 +3,17 @@ import script
 import testinit
 import tkinter as tk
 from tkinter import messagebox
+from tkinter import ttk
 
 window = tk.Tk()
 window.title("Temp File Reporter")
-window.geometry("600x600")
+window.geometry("1000x1000")
+
+columns = ("Path", "File/Folder Name", "Size", "Last Modified")
+
+tree = ttk.Treeview(window, columns=columns, show='headings')
+for col in columns:
+    tree.heading(col, text=col)
 
 # Grid configuration
 window.columnconfigure(0, weight=1)  # Makes sure the window scales properly
@@ -23,8 +30,6 @@ dirLab.grid(row=1, column=0, padx=10, pady=10, sticky='w')
 dirEntry = tk.Entry(window)
 dirEntry.grid(row=2, column=0, padx=10, pady=10, sticky='ew')
 
-# Table Header
-tblHdr = tk.Label(window, text="")
 
 def stringifyBytes(bytes):
     kb = bytes/1000
@@ -41,6 +46,20 @@ def stringifyBytes(bytes):
         return str(gb) + " GB"
     return str(tb) + " TB"
 
+def getInsights():
+    totBytes = 0
+    for tup in script.tempFiles:
+        totBytes += tup[2]
+    totBytes = stringifyBytes(totBytes)
+    txt = "You can save " + totBytes + " of storage if you remove these files!"
+    insights = tk.Label(window, text=txt)
+    insights.grid(row=6, column=0, padx=10, pady=10)
+
+def listData():
+    for tup in script.tempFiles:
+        tempTup = (tup[0], tup[1], stringifyBytes(tup[2]), tup[3])
+        tree.insert("", tk.END, values=tempTup)
+
 # function for processing submission
 def dir_submit():
     enteredDir = dirEntry.get()
@@ -49,8 +68,9 @@ def dir_submit():
     else:
         script.getTemp(enteredDir)
         printLog()
-        startingRow = 4
-        currRow = startingRow
+        getInsights()
+        listData()
+
 
 
 
@@ -58,6 +78,8 @@ def dir_submit():
 dirSub = tk.Button(window, text="Submit", command=dir_submit)
 dirSub.grid(row=3, column=0, padx=10, pady=10)
 
+
+tree.grid(row=5, column=0, padx=10, pady=10, sticky='ew')
 
 
 
