@@ -9,7 +9,7 @@ window = tk.Tk()
 window.title("Temp File Reporter")
 window.geometry("1000x1000")
 
-columns = ("Path", "File/Folder Name", "Size", "Last Modified")
+columns = ("Path", "Type", "Name", "Size", "Last Modified")
 
 tree = ttk.Treeview(window, columns=columns, show='headings')
 for col in columns:
@@ -32,16 +32,16 @@ dirEntry.grid(row=2, column=0, padx=10, pady=10, sticky='ew')
 
 
 def stringifyBytes(bytes):
-    kb = bytes/1000
+    kb = round(bytes/1000, 2)
     if (kb < 1):
         return str(bytes) + " Bytes"
-    mb = kb/1000
+    mb = round(kb/1000, 2)
     if (mb < 1):
         return str(kb) + " KB"
-    gb = mb/1000
+    gb = round(mb/1000, 2)
     if (gb < 1):
         return str(mb) + " MB"
-    tb = gb/1000
+    tb = round(gb/1000, 2)
     if (tb < 1):
         return str(gb) + " GB"
     return str(tb) + " TB"
@@ -50,6 +50,9 @@ def getInsights():
     totBytes = 0
     for tup in script.tempFiles:
         totBytes += tup[2]
+    for dir in script.tempFolders:
+        totBytes += dir[2]
+    
     totBytes = stringifyBytes(totBytes)
     txt = "You can save " + totBytes + " of storage if you remove these files!"
     insights = tk.Label(window, text=txt)
@@ -57,7 +60,10 @@ def getInsights():
 
 def listData():
     for tup in script.tempFiles:
-        tempTup = (tup[0], tup[1], stringifyBytes(tup[2]), tup[3])
+        tempTup = (tup[0], "File", tup[1], stringifyBytes(tup[2]), tup[3])
+        tree.insert("", tk.END, values=tempTup)
+    for dir in script.tempFolders:
+        tempTup = (dir[0], "Directory", dir[1], stringifyBytes(dir[2]), dir[3])
         tree.insert("", tk.END, values=tempTup)
 
 # function for processing submission
@@ -66,6 +72,8 @@ def dir_submit():
     if not os.path.exists(enteredDir):
         messagebox.showerror("Invalid directory", "You entered an invalid directory! Please enter a valid one")
     else:
+        script.tempFiles = []
+        script.tempFolders = []
         script.getTemp(enteredDir)
         printLog()
         getInsights()
